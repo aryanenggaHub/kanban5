@@ -6,6 +6,8 @@ A single-file Kanban board demo for a fictitious bank's IT PMO team. Vanilla HTM
 
 [![CI/CD](https://github.com/aryanenggaHub/kanban5/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/aryanenggaHub/kanban5/actions/workflows/ci-cd.yml)
 
+![IT PMO Kanban board](docs/screenshot.png)
+
 ## Features
 
 - Board with task cards grouped by status column, with per-column counts
