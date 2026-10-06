@@ -1,0 +1,10 @@
+.env*
+*.pem
+*.key
+.claude/settings.local.json
+.vscode/
+.idea/
+node_modules/
+_site/
+.DS_Store
+Thumbs.db

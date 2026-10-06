@@ -1,0 +1,48 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checks
+        run: |
+          fail=0
+          test -f index.html || { echo "index.html missing"; exit 1; }
+          if grep -nE 'localStorage|sessionStorage|indexedDB|document\.cookie' index.html; then echo "::error::storage API found"; fail=1; fi
+          if grep -n '!important' index.html; then echo "::error::!important found"; fail=1; fi
+          if grep -nEi '<(script|link|img)[^>]+(src|href)=["'"'"']?https?://' index.html; then echo "::error::external resource found"; fail=1; fi
+          if grep -rnE -e '-----BEGIN' -e 'ghp_' -e 'github_pat_' -e 'AKIA' -e 'sk-[A-Za-z0-9]{10,}' -e 'xox[bp]-' -e 'AIza' --exclude-dir=.git --exclude-dir=.github .; then echo "::error::possible secret found"; fail=1; fi
+          exit $fail
+
+  deploy:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage site
+        run: mkdir _site && cp index.html _site/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
