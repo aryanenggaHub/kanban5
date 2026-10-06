@@ -31,6 +31,19 @@ All logic is in the `<script>` block, organised around one `state` object (`task
 - **Add Task flow:** `onSubmit` → `validateForm` → `addTask` (optimistic render) → close modal + success toast → `notifyNewTask` in try/catch, with a warning toast on failure.
 - **Dates:** `YYYY-MM-DD` strings compared lexically (`todayStr()`, `addDays()`); seed due dates are relative to today so the demo always has an overdue item.
 
+## Version 2 (`v2/index.html`)
+
+A redesign served at `/v2/` beside version 1 (see `docs/adr/0001`). Version 1 at the root stays untouched. Domain terms live in `GLOSSARY.md`; use them in code and tests.
+
+- **Two script blocks, one file.** `<script id="core">` is pure (`createBoard({ today })` returns `view`, `add`, `move`, `remove`, `setFilters`; no DOM, no network). `<script id="ui">` draws `view()` and routes events. New behaviour goes in the core first.
+- **Test first at the seam.** `node --test v2/board.test.mjs` extracts the core from the HTML (`docs/adr/0002`). Write the failing test, then the code. The browser seam is checked by driving the served page with Playwright and asserting on `getComputedStyle`.
+- **Add Task is a native `<dialog>`** (`showModal()`), which supplies the focus trap, Escape and return-focus. Do not rebuild those by hand.
+- **Filters live in the URL query** (`project`, `priority`, `assignee`), validated against the allowed lists on load. The URL is the only persistence; there is still no storage API.
+- **CSP meta tag** allows only inline script/style and `connect-src https://formsubmit.co`. A new external request needs a matching CSP edit.
+- **Text contrast:** `--ink-muted` is `#6e6e73`, darker than DESIGN.md's `#7a7a7a`, so small text passes AA.
+- **Copy:** Title Case for buttons and headings; ellipsis is `…`.
+- **Serving for Playwright:** its browser blocks `file:`, and Python is not installed. Serve the folder with a small `node:http` script kept outside the project.
+
 ## Styling
 
 CSS tokens are in `:root` and mirror `DESIGN.md` (Action Blue `#0066cc` is the only interactive colour; flat cards with hairline borders, no shadows). Red/amber are reserved for priority and Overdue only.

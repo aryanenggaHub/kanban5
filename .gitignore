@@ -9,3 +9,6 @@ _site/
 .DS_Store
 Thumbs.db
 .playwright-mcp/
+.agents/
+.claude/skills/
+skills-lock.json

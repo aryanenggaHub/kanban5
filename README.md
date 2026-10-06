@@ -2,11 +2,25 @@
 
 A single-file Kanban board demo for a fictitious bank's IT PMO team. Vanilla HTML, CSS and JS.
 
-**Live demo:** https://aryanenggaHub.github.io/kanban5/
+**Live demo:**
+- Version 2 (redesign): https://aryanenggaHub.github.io/kanban5/v2/
+- Version 1 (original): https://aryanenggaHub.github.io/kanban5/
 
 [![CI/CD](https://github.com/aryanenggaHub/kanban5/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/aryanenggaHub/kanban5/actions/workflows/ci-cd.yml)
 
-![IT PMO Kanban board](docs/screenshot.png)
+![IT PMO Kanban board, version 2](docs/screenshot-v2.png)
+
+## Version 2
+
+A redesign in [v2/index.html](v2/index.html) that follows [DESIGN.md](DESIGN.md): a dark hero tile with the summary, a frosted sticky tool bar, and flat white task cards. Same features as version 1, plus:
+
+- Pure board core (`createBoard`) with 17 tests, run by `node --test v2/board.test.mjs`
+- Filters kept in the URL, so a filtered board can be shared
+- Native `<dialog>` for Add Task, with focus handling from the browser
+- Content Security Policy that allows only the FormSubmit request
+- Responsive from phone to wide desktop, keyboard and reduced-motion friendly
+
+Version 1 (below, screenshot in `docs/screenshot.png`) stays live and unchanged.
 
 ## Features
 
@@ -21,7 +35,7 @@ A single-file Kanban board demo for a fictitious bank's IT PMO team. Vanilla HTM
 
 ## Run
 
-Open `index.html` in a browser. No build, no server, no package manager.
+Open `index.html` (version 1) or `v2/index.html` (version 2) in a browser. No build, no server, no package manager. Tests need only Node: `node --test v2/board.test.mjs`.
 
 ## Constraints
 
@@ -33,9 +47,13 @@ Open `index.html` in a browser. No build, no server, no package manager.
 ## Structure
 
 ```
-index.html                  the whole app
+index.html                  version 1, the whole app
+v2/index.html               version 2, the whole app (core + page)
+v2/board.test.mjs           tests for the version 2 board core
+GLOSSARY.md                 domain terms
 DESIGN.md                   visual language
 CLAUDE.md                   guidance for Claude Code
+docs/adr/                   architecture decisions
 docs/superpowers/           spec and implementation plan
 .github/workflows/ci-cd.yml checks and GitHub Pages deploy
 ```

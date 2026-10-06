@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src https://formsubmit.co; base-uri 'none'; form-action 'none'">
+<link rel="icon" href="data:,">
+<title>IT PMO Kanban</title>
+<style>
+  /* ===== Design tokens (DESIGN.md) ===== */
+  :root {
+    --primary: #0066cc;
+    --primary-focus: #0071e3;
+    --primary-on-dark: #2997ff;
+    --ink: #1d1d1f;
+    --ink-muted-80: #333333;
+    --ink-muted: #6e6e73;            /* darker than DESIGN's #7a7a7a so small text passes AA on white */
+    --canvas: #ffffff;
+    --parchment: #f5f5f7;
+    --pearl: #fafafc;
+    --tile: #272729;
+    --black: #000000;
+    --body-muted-on-dark: #cccccc;
+    --hairline: #e0e0e0;
+    --hairline-soft: rgba(0, 0, 0, 0.08);
+    --crit: #d70015;
+    --crit-bg: #fdecee;
+    --crit-on-dark: #ff6b6b;
+    --high-text: #8a5300;
+    --high-bg: #fff4e0;
+    --med-bg: #e8f1fb;
+    --low: #6e6e73;
+    --low-bg: #efeff1;
+    --xxs: 4px; --xs: 8px; --sm: 12px; --md: 17px; --lg: 24px; --xl: 32px; --xxl: 48px; --section: 80px;
+    --r-sm: 8px; --r-md: 11px; --r-lg: 18px; --r-pill: 9999px;
+    --gutter: 24px;
+    --font: "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-display: "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  /* ===== Base ===== */
+  * { box-sizing: border-box; }
+  html { color-scheme: light; scroll-padding-top: 88px; -webkit-text-size-adjust: 100%; }
+  body { margin: 0; font-family: var(--font); font-size: 17px; font-weight: 400; line-height: 1.47; letter-spacing: -0.374px; color: var(--ink); background: var(--parchment); -webkit-tap-highlight-color: transparent; }
+  h1, h2, h3, p, dl, dd { margin: 0; }
+  h1, h2, h3 { text-wrap: balance; }
+  button, select, input, textarea { font: inherit; letter-spacing: inherit; color: inherit; touch-action: manipulation; }
+  a { color: var(--primary); }
+  :focus-visible { outline: 2px solid var(--primary-focus); outline-offset: 2px; }
+  [hidden] { display: none; }
+  .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+  .skip { position: absolute; left: var(--md); top: -64px; z-index: 30; background: var(--canvas); color: var(--primary); padding: var(--xs) var(--lg); border-radius: var(--r-pill); }
+  .skip:focus { top: var(--xs); }
+  .wrap { max-width: 1440px; margin: 0 auto; padding-inline: max(var(--gutter), env(safe-area-inset-left)) max(var(--gutter), env(safe-area-inset-right)); }
+
+  /* ===== Buttons ===== */
+  .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 11px 22px; border: 1px solid var(--primary); border-radius: var(--r-pill); background: var(--primary); color: #fff; font-size: 17px; line-height: 1.2; cursor: pointer; transition: transform 0.1s ease-out; }
+  .btn:active { transform: scale(0.95); }
+  .btn-ghost { background: transparent; color: var(--primary); }
+  .btn-danger { background: var(--crit); border-color: var(--crit); }
+  @media (hover: hover) { .btn:not(.btn-ghost):hover { background: var(--primary-focus); border-color: var(--primary-focus); } .btn-danger:hover { background: var(--crit); border-color: var(--crit); } .btn-ghost:hover { background: var(--med-bg); } }
+
+  /* ===== Global nav ===== */
+  .global-nav { background: var(--black); color: #fff; min-height: 44px; }
+  .global-nav .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+  .wordmark { font-size: 17px; font-weight: 600; letter-spacing: 0.4px; }
+  .wordmark span { color: var(--primary-on-dark); }
+  .nav-link { font-size: 12px; letter-spacing: -0.12px; color: var(--primary-on-dark); display: inline-flex; align-items: center; min-height: 44px; }
+
+  /* ===== Hero tile (dark) ===== */
+  .hero { background: var(--tile); color: #fff; padding-block: 64px var(--xxl); }
+  .hero h1 { font-family: var(--font-display); font-size: 56px; font-weight: 600; line-height: 1.07; letter-spacing: -0.28px; }
+  .hero .lead { margin-top: var(--sm); max-width: 52ch; font-family: var(--font-display); font-size: 24px; font-weight: 300; line-height: 1.5; letter-spacing: 0; color: var(--body-muted-on-dark); }
+  .stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--lg); margin-top: var(--xl); padding-top: var(--lg); border-top: 1px solid rgba(255, 255, 255, 0.16); }
+  .stat { display: flex; flex-direction: column-reverse; }
+  .stat dt { font-size: 14px; line-height: 1.43; letter-spacing: -0.224px; color: var(--body-muted-on-dark); }
+  .stat dd { font-family: var(--font-display); font-size: 40px; font-weight: 600; line-height: 1.1; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .stat-overdue dd { color: var(--crit-on-dark); }
+
+  /* ===== Tool bar (frosted, sticky) ===== */
+  .toolbar { position: sticky; top: 0; z-index: 5; background: rgba(245, 245, 247, 0.8); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid var(--hairline-soft); }
+  .toolbar .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sm); padding-block: var(--sm); }
+  .toolbar .spacer { margin-left: auto; }
+  .control { height: 44px; border: 1px solid var(--hairline-soft); border-radius: var(--r-pill); padding: 0 20px; background-color: var(--canvas); color: var(--ink); font-size: 14px; letter-spacing: -0.224px; min-width: 0; }
+  select.control { padding-right: var(--md); }
+  input.control { width: 220px; }
+
+  /* ===== Board ===== */
+  .board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--lg); padding-block: var(--lg) var(--section); }
+  .column-head { display: flex; align-items: center; justify-content: space-between; padding: 0 var(--xxs) var(--sm); }
+  .column-head h2 { font-family: var(--font-display); font-size: 21px; font-weight: 600; line-height: 1.19; letter-spacing: 0.231px; }
+  .count { background: var(--ink); color: #fff; border-radius: var(--r-pill); font-size: 12px; line-height: 20px; min-width: 24px; text-align: center; padding: 0 var(--xs); font-variant-numeric: tabular-nums; }
+  .cards { display: flex; flex-direction: column; gap: var(--sm); min-height: 120px; border-radius: var(--r-lg); }
+  .column.is-target .cards { outline: 2px solid var(--primary); outline-offset: 4px; }
+  .empty { color: var(--ink-muted); font-size: 14px; line-height: 1.43; letter-spacing: -0.224px; padding: var(--md) var(--xxs); }
+  .is-dragging { user-select: none; }
+
+  /* ===== Task card (store-utility-card: white, hairline, flat) ===== */
+  .card { background: var(--canvas); border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: var(--lg); cursor: grab; min-width: 0; }
+  .card-top { display: flex; align-items: center; gap: var(--xs); min-height: 24px; font-size: 12px; letter-spacing: -0.12px; color: var(--ink-muted); }
+  .card-top .id { font-weight: 600; }
+  .card h3 { margin: var(--xs) 0 var(--xxs); font-size: 17px; font-weight: 600; line-height: 1.24; overflow-wrap: anywhere; }
+  .card .detail { font-size: 14px; line-height: 1.43; letter-spacing: -0.224px; color: var(--ink-muted); overflow-wrap: anywhere; }
+  .tags { display: flex; flex-wrap: wrap; gap: var(--xxs); margin: var(--sm) 0; }
+  .pill, .tag, .badge-overdue { font-size: 12px; line-height: 1.5; border-radius: var(--r-pill); padding: 1px var(--xs); letter-spacing: 0; }
+  .pill-critical { background: var(--crit-bg); color: var(--crit); font-weight: 600; }
+  .pill-high { background: var(--high-bg); color: var(--high-text); }
+  .pill-medium { background: var(--med-bg); color: var(--primary); }
+  .pill-low { background: var(--low-bg); color: var(--low); }
+  .tag { background: var(--parchment); border: 1px solid var(--hairline); color: var(--ink); }
+  .badge-overdue { background: var(--crit-bg); color: var(--crit); font-weight: 600; }
+  .del { margin: -10px -10px -10px auto; width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent; color: var(--ink-muted); font-size: 24px; line-height: 1; cursor: pointer; }
+  @media (hover: hover) { .del:hover { background: var(--low-bg); color: var(--ink); } }
+  .confirm { display: flex; flex-wrap: wrap; align-items: center; gap: var(--xs); margin-bottom: var(--xs); }
+  .confirm p { flex: 1 1 100%; font-size: 14px; font-weight: 600; letter-spacing: -0.224px; color: var(--crit); }
+  .confirm .btn { font-size: 14px; padding: 8px 15px; }
+  .move { width: 100%; height: 44px; border: 1px solid var(--hairline); border-radius: var(--r-md); background-color: var(--pearl); color: var(--ink-muted-80); font-size: 14px; letter-spacing: -0.224px; padding: 0 var(--sm); }
+
+  /* ===== Toasts ===== */
+  .toasts { position: fixed; bottom: var(--lg); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: var(--xs); z-index: 20; width: min(92vw, 460px); pointer-events: none; }
+  .toast { padding: var(--sm) var(--md); border-radius: var(--r-sm); background: var(--ink); color: #fff; font-size: 14px; line-height: 1.43; letter-spacing: -0.224px; }
+
+  /* ===== Dialog + form ===== */
+  dialog { border: 0; padding: 0; border-radius: var(--r-lg); width: min(560px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overscroll-behavior: contain; background: var(--canvas); color: var(--ink); }
+  dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
+  .dialog-body { padding: var(--lg); }
+  .dialog-body h2 { font-family: var(--font-display); font-size: 28px; font-weight: 600; line-height: 1.14; letter-spacing: 0.196px; margin-bottom: var(--md); }
+  .field { margin-bottom: var(--sm); }
+  .field label { display: block; font-size: 14px; font-weight: 600; letter-spacing: -0.224px; margin-bottom: var(--xxs); }
+  .field input, .field select { width: 100%; height: 44px; border: 1px solid var(--hairline); border-radius: var(--r-pill); padding: 0 20px; background-color: var(--canvas); color: var(--ink); }
+  .field textarea { width: 100%; min-height: 96px; border: 1px solid var(--hairline); border-radius: var(--r-lg); padding: var(--sm) 20px; background-color: var(--canvas); color: var(--ink); resize: vertical; }
+  .field [aria-invalid="true"] { border-color: var(--crit); }
+  .err { color: var(--crit); font-size: 14px; line-height: 1.43; letter-spacing: -0.224px; margin-top: var(--xxs); }
+  .err:empty { display: none; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sm); }
+  .actions { display: flex; justify-content: flex-end; gap: var(--xs); margin-top: var(--md); }
+
+  /* ===== Footer ===== */
+  .footer { background: var(--parchment); color: var(--ink-muted-80); font-size: 12px; line-height: 1.5; letter-spacing: -0.12px; padding-block: 0 var(--xxl); }
+
+  /* ===== Responsive (DESIGN.md breakpoints) ===== */
+  @media (max-width: 1068px) { .hero h1 { font-size: 40px; } .stat dd { font-size: 34px; } }
+  @media (max-width: 1023px) { .board { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 834px) { .toolbar { position: static; } }
+  @media (max-width: 640px) {
+    :root { --gutter: 17px; --section: 48px; }
+    .hero { padding-block: var(--xxl) var(--lg); }
+    .hero h1 { font-size: 34px; }
+    .hero .lead { font-size: 19px; }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .board { grid-template-columns: 1fr; }
+    .toolbar .spacer { margin-left: 0; order: -1; }
+    .toolbar .control, .toolbar .btn { flex: 1 1 100%; width: 100%; }
+    .row2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 419px) { .hero h1 { font-size: 28px; } }
+  @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#board">Skip to the board</a>
+
+<header class="global-nav">
+  <div class="wrap">
+    <p class="wordmark" translate="no">IT <span>PMO</span></p>
+    <a class="nav-link" href="../">View Version 1</a>
+  </div>
+</header>
+
+<section class="hero" aria-labelledby="page-title">
+  <div class="wrap">
+    <h1 id="page-title">Delivery Board</h1>
+    <p class="lead">Follow every IT PMO task from backlog to done. Demo data resets when you refresh.</p>
+    <h2 class="sr-only">Board Summary</h2>
+    <dl class="stats" id="stats"></dl>
+  </div>
+</section>
+
+<section class="toolbar" aria-label="Filters and actions">
+  <div class="wrap">
+    <label class="sr-only" for="flt-project">Project</label>
+    <select class="control" id="flt-project" name="project" autocomplete="off"></select>
+    <label class="sr-only" for="flt-priority">Priority</label>
+    <select class="control" id="flt-priority" name="priority" autocomplete="off"></select>
+    <label class="sr-only" for="flt-assignee">Assignee</label>
+    <input class="control" id="flt-assignee" name="assignee" type="search" autocomplete="off" placeholder="Filter by assignee…">
+    <button type="button" class="btn spacer" id="addBtn">Add Task</button>
+  </div>
+</section>
+
+<main class="wrap board" id="board" tabindex="-1">
+  <noscript><p class="empty">This board needs JavaScript to run.</p></noscript>
+</main>
+
+<footer class="footer">
+  <div class="wrap"><p>Demo data for a fictitious IT PMO. No real bank information is used.</p></div>
+</footer>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<dialog id="taskDialog" aria-labelledby="dialog-title">
+  <div class="dialog-body">
+    <h2 id="dialog-title">Add Task</h2>
+    <form id="taskForm" novalidate>
+      <div class="field">
+        <label for="f-title">Task Title</label>
+        <input id="f-title" name="title" type="text" maxlength="80" autocomplete="off" placeholder="Rotate HSM keys…" aria-required="true" aria-describedby="e-title">
+        <p class="err" id="e-title"></p>
+      </div>
+      <div class="field">
+        <label for="f-desc">Description (optional)</label>
+        <textarea id="f-desc" name="description" maxlength="500" autocomplete="off" aria-describedby="e-description"></textarea>
+        <p class="err" id="e-description"></p>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="f-project">Project</label><select id="f-project" name="project" autocomplete="off"></select></div>
+        <div class="field"><label for="f-category">Category</label><select id="f-category" name="category" autocomplete="off"></select></div>
+      </div>
+      <div class="field">
+        <label for="f-assignee">Assignee</label>
+        <input id="f-assignee" name="assignee" type="text" autocomplete="off" placeholder="Marcus Tan…" aria-required="true" aria-describedby="e-assignee">
+        <p class="err" id="e-assignee"></p>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="f-priority">Priority</label><select id="f-priority" name="priority" autocomplete="off"></select></div>
+        <div class="field"><label for="f-status">Status</label><select id="f-status" name="status" autocomplete="off"></select></div>
+      </div>
+      <div class="field">
+        <label for="f-due">Due Date</label>
+        <input id="f-due" name="dueDate" type="date" autocomplete="off" aria-required="true" aria-describedby="e-dueDate">
+        <p class="err" id="e-dueDate"></p>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn">Add Task</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<script id="core">
+"use strict";
+/* ===== Board core: pure, no DOM, no network. Tests import this block (v2/board.test.mjs). ===== */
+const STATUSES = ["Backlog", "In Progress", "Blocked", "Done"];
+const PROJECTS = ["Core Banking Upgrade", "Digital Channels", "Cybersecurity Uplift", "Data & Analytics", "Infrastructure & Cloud", "Vendor Management"];
+const CATEGORIES = ["Application Development", "Infrastructure", "Cybersecurity", "Data", "Compliance", "Vendor"];
+const PRIORITIES = ["Critical", "High", "Medium", "Low"];
+
+/* Dates are YYYY-MM-DD strings; they compare correctly as text. */
+function addDays(day, n) {
+  const d = new Date(day + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+/* Seed due dates are relative to today so the demo always has overdue work. */
+function seedTasks(today) {
+  const t = (n, title, project, category, assignee, priority, due, status) =>
+    ({ id: "ITPM-" + String(n).padStart(4, "0"), title, description: "", project, category, assignee, priority, dueDate: addDays(today, due), status });
+  return [
+    t(1, "Migrate FX pricing service to AWS", "Infrastructure & Cloud", "Infrastructure", "Priya Nair", "High", 21, "In Progress"),
+    t(2, "Patch CVE-2025-XXXX on branch teller VDI", "Cybersecurity Uplift", "Cybersecurity", "Marcus Tan", "Critical", -3, "In Progress"),
+    t(3, "UAT sign-off for mobile onboarding release 4.2", "Digital Channels", "Application Development", "Aisha Rahman", "High", 5, "Backlog"),
+    t(4, "Core ledger vendor licence renewal", "Vendor Management", "Vendor", "Daniel Lim", "Medium", -10, "Blocked"),
+    t(5, "Build regulatory reporting data mart", "Data & Analytics", "Data", "Wei Ling Chua", "Medium", 45, "Backlog"),
+    t(6, "Firewall change blocked pending CAB approval", "Infrastructure & Cloud", "Compliance", "Marcus Tan", "High", 7, "Blocked"),
+    t(7, "Decommission legacy SWIFT gateway test rig", "Core Banking Upgrade", "Infrastructure", "Priya Nair", "Low", -20, "Done"),
+    t(8, "Document disaster recovery runbook for payments", "Core Banking Upgrade", "Compliance", "Aisha Rahman", "Low", 30, "Backlog")
+  ];
+}
+
+/* createBoard({ today }) is the whole interface the page and the tests use. */
+function createBoard({ today }) {
+  let tasks = seedTasks(today);
+  const isOverdue = t => t.status !== "Done" && t.dueDate < today;
+
+  let filters = { project: "", assignee: "", priority: "" };
+  function setFilters(f) { filters = { project: f.project, assignee: f.assignee, priority: f.priority }; }
+  function matches(t) {
+    const q = filters.assignee.trim().toLowerCase();
+    return (!filters.project || t.project === filters.project) &&
+      (!filters.priority || t.priority === filters.priority) &&
+      (!q || t.assignee.toLowerCase().includes(q));
+  }
+
+  /* Columns are filtered; the summary always counts every task. */
+  function view() {
+    const byStatus = {};
+    STATUSES.forEach(s => { byStatus[s] = tasks.filter(t => t.status === s).length; });
+    return {
+      columns: STATUSES.map(status => ({
+        status,
+        tasks: tasks.filter(t => t.status === status && matches(t)).map(t => ({ ...t, overdue: isOverdue(t) }))
+      })),
+      summary: { total: tasks.length, byStatus, overdue: tasks.filter(isOverdue).length }
+    };
+  }
+
+  function move(id, status) {
+    const t = tasks.find(x => x.id === id);
+    if (!t || !STATUSES.includes(status) || t.status === status) return false;
+    t.status = status;
+    return true;
+  }
+
+  function remove(id) {
+    const before = tasks.length;
+    tasks = tasks.filter(t => t.id !== id);
+    return tasks.length < before;
+  }
+
+  let nextNum = tasks.length + 1;   /* a counter, not max+1, so ids are never reused after a delete */
+
+  function validate(v) {
+    const e = {};
+    const title = v.title.trim();
+    if (!title) e.title = "Enter a task title.";
+    else if (title.length > 80) e.title = "Shorten the title to 80 characters or fewer.";
+    if (v.description.length > 500) e.description = "Shorten the description to 500 characters or fewer.";
+    if (!v.assignee.trim()) e.assignee = "Enter an assignee.";
+    if (!v.dueDate) e.dueDate = "Choose a due date.";
+    else if (v.dueDate < today) e.dueDate = "Choose today or a later date.";
+    if (!PROJECTS.includes(v.project)) e.project = "Choose a project from the list.";
+    if (!CATEGORIES.includes(v.category)) e.category = "Choose a category from the list.";
+    if (!PRIORITIES.includes(v.priority)) e.priority = "Choose a priority from the list.";
+    if (!STATUSES.includes(v.status)) e.status = "Choose a status from the list.";
+    return e;
+  }
+
+  function add(v) {
+    const errors = validate(v);
+    if (Object.keys(errors).length) return { ok: false, errors };
+    const task = {
+      id: "ITPM-" + String(nextNum++).padStart(4, "0"),
+      title: v.title.trim(), description: v.description.trim(), project: v.project, category: v.category,
+      assignee: v.assignee.trim(), priority: v.priority, dueDate: v.dueDate, status: v.status
+    };
+    tasks.push(task);
+    return { ok: true, task: { ...task } };
+  }
+
+  return { view, move, remove, add, setFilters };
+}
+</script>
+
+<script id="ui">
+"use strict";
+/* ===== Page: draws createBoard().view() and routes events. State lives in the core; this block only holds transient UI flags. ===== */
+
+/* FormSubmit needs a ONE-TIME ACTIVATION: the first submission to this address triggers a confirmation
+   email, and submissions are delivered only after that link is clicked. Replace the placeholder here
+   (the only place the address appears). */
+const FORMSUBMIT_ENDPOINT = "https://formsubmit.co/ajax/YOUR_EMAIL@example.com";
+
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, "0");
+const localToday = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
+const dueFormat = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" });
+const dueFormatYear = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" });
+const formatDue = iso => {                        /* the year is shown only when it is not the current year */
+  const [y, m, d] = iso.split("-").map(Number);
+  return (y === new Date().getFullYear() ? dueFormat : dueFormatYear).format(new Date(y, m - 1, d));
+};
+const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const optionsHtml = (list, blank) => (blank ? `<option value="">${blank}</option>` : "") + list.map(v => `<option>${escapeHtml(v)}</option>`).join("");
+
+const today = localToday();
+const kanban = createBoard({ today });
+const ui = { confirmingId: null, focus: null };   /* transient flags; render() restores focus because it replaces the DOM */
+
+/* ===== Rendering ===== */
+function renderCard(t) {
+  const id = escapeHtml(t.id);
+  const head = ui.confirmingId === t.id
+    ? `<div class="confirm" role="group" aria-label="Confirm delete ${id}"><p>Delete this task?</p><button type="button" class="btn btn-danger" data-act="yes" data-id="${id}">Delete Task</button><button type="button" class="btn btn-ghost" data-act="no" data-id="${id}">Keep Task</button></div>`
+    : "";
+  const del = ui.confirmingId === t.id ? "" : `<button type="button" class="del" data-act="del" data-id="${id}" aria-label="Delete task ${id}"><span aria-hidden="true">&times;</span></button>`;
+  const targets = STATUSES.filter(s => s !== t.status);
+  const p = t.priority.toLowerCase();
+  return `<article class="card" draggable="true" data-id="${id}">
+    <div class="card-top"><span class="id" translate="no">${id}</span>${t.overdue ? '<span class="badge-overdue">Overdue</span>' : ""}${del}</div>
+    ${head}
+    <h3>${escapeHtml(t.title)}</h3>
+    <p class="detail">${escapeHtml(t.project)}</p>
+    <p class="detail">${escapeHtml(t.assignee)}, due <time datetime="${escapeHtml(t.dueDate)}">${escapeHtml(formatDue(t.dueDate))}</time></p>
+    <div class="tags"><span class="pill pill-${p}">${escapeHtml(t.priority)}</span><span class="tag">${escapeHtml(t.category)}</span></div>
+    <select class="move" data-id="${id}" aria-label="Move ${id} to another column">${optionsHtml(targets, "Move To…")}</select>
+  </article>`;
+}
+
+function render() {
+  const { columns, summary } = kanban.view();
+  const filtered = Object.values(readFilters()).some(Boolean);
+  const emptyText = filtered ? "No tasks match the filters. Clear a filter to see more." : "No tasks here. Drag a card in, or choose Move To on a card.";
+  $("board").innerHTML = columns.map(col => `<section class="column" data-status="${escapeHtml(col.status)}" aria-labelledby="col-${col.status.replace(/ /g, "-")}">
+      <div class="column-head"><h2 id="col-${col.status.replace(/ /g, "-")}">${escapeHtml(col.status)}</h2><span class="count" aria-label="${col.tasks.length} tasks">${col.tasks.length}</span></div>
+      <div class="cards">${col.tasks.length ? col.tasks.map(renderCard).join("") : `<p class="empty">${emptyText}</p>`}</div>
+    </section>`).join("");
+  const stat = (label, n, cls) => `<div class="stat${cls ? " " + cls : ""}"><dt>${escapeHtml(label)}</dt><dd>${n}</dd></div>`;
+  $("stats").innerHTML = stat("Total", summary.total) + STATUSES.map(s => stat(s, summary.byStatus[s])).join("") + stat("Overdue", summary.overdue, "stat-overdue");
+  if (ui.focus) { const el = document.querySelector(ui.focus); if (el) el.focus(); ui.focus = null; }
+}
+
+/* ===== Filters (kept in the URL so a filtered board can be shared) ===== */
+function readFilters() { return { project: $("flt-project").value, priority: $("flt-priority").value, assignee: $("flt-assignee").value }; }
+
+function filtersFromUrl() {
+  const q = new URLSearchParams(location.search);
+  const pick = (key, list) => list.includes(q.get(key)) ? q.get(key) : "";
+  return { project: pick("project", PROJECTS), priority: pick("priority", PRIORITIES), assignee: (q.get("assignee") || "").slice(0, 80) };
+}
+
+function applyFilters() {
+  const f = readFilters();
+  kanban.setFilters(f);
+  const q = new URLSearchParams();
+  Object.entries(f).forEach(([k, v]) => { if (v) q.set(k, v); });
+  try { history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : "")); } catch (e) { /* URL sync is a convenience */ }
+  render();
+}
+
+/* ===== Toasts ===== */
+function toast(message) {
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = message;
+  $("toasts").appendChild(el);
+  setTimeout(() => el.remove(), 4500);
+}
+
+/* ===== Email notification (never allowed to break the board) ===== */
+async function notifyNewTask(task) {
+  const res = await fetch(FORMSUBMIT_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      _subject: `[IT PMO] New task ${task.id}: ${task.title}`, _template: "table", _captcha: "false",
+      "Task ID": task.id, Title: task.title, Description: task.description, Project: task.project, Category: task.category,
+      Assignee: task.assignee, Priority: task.priority, "Due Date": task.dueDate, Status: task.status, "Submitted At": new Date().toISOString()
+    })
+  });
+  if (!res.ok) throw new Error("FormSubmit failed: " + res.status);
+}
+
+/* ===== Add Task dialog ===== */
+const FIELD_IDS = { title: "f-title", description: "f-desc", project: "f-project", category: "f-category", assignee: "f-assignee", priority: "f-priority", status: "f-status", dueDate: "f-due" };
+
+function readForm() {
+  const v = {};
+  Object.entries(FIELD_IDS).forEach(([k, id]) => { v[k] = $(id).value; });
+  return v;
+}
+
+function showErrors(errors) {
+  Object.entries(FIELD_IDS).forEach(([k, id]) => {
+    $(id).setAttribute("aria-invalid", errors[k] ? "true" : "false");
+    const slot = $("e-" + k);
+    if (slot) slot.textContent = errors[k] || "";
+  });
+  const first = Object.keys(FIELD_IDS).find(k => errors[k]);
+  if (first) $(FIELD_IDS[first]).focus();
+}
+
+function openDialog() {
+  $("taskForm").reset();
+  $("f-priority").value = "Medium";
+  $("f-status").value = "Backlog";
+  $("f-due").min = today;
+  showErrors({});
+  $("taskDialog").showModal();
+  $("f-title").focus();
+}
+
+async function onSubmit(ev) {
+  ev.preventDefault();
+  const result = kanban.add(readForm());
+  showErrors(result.ok ? {} : result.errors);
+  if (!result.ok) return;
+  render();
+  $("taskDialog").close();
+  toast(`Task ${result.task.id} added.`);
+  try { await notifyNewTask(result.task); }
+  catch (err) { toast("Task added, but the email notification did not send."); }
+}
+
+/* ===== Wiring ===== */
+function init() {
+  $("flt-project").innerHTML = optionsHtml(PROJECTS, "All Projects");
+  $("flt-priority").innerHTML = optionsHtml(PRIORITIES, "All Priorities");
+  $("f-project").innerHTML = optionsHtml(PROJECTS);
+  $("f-category").innerHTML = optionsHtml(CATEGORIES);
+  $("f-priority").innerHTML = optionsHtml(PRIORITIES);
+  $("f-status").innerHTML = optionsHtml(STATUSES);
+
+  const f = filtersFromUrl();
+  $("flt-project").value = f.project; $("flt-priority").value = f.priority; $("flt-assignee").value = f.assignee;
+  kanban.setFilters(f);
+  ["flt-project", "flt-priority"].forEach(id => $(id).addEventListener("change", applyFilters));
+  $("flt-assignee").addEventListener("input", applyFilters);
+
+  const board = $("board");
+  board.addEventListener("click", ev => {
+    const b = ev.target.closest("button[data-act]");
+    if (!b) return;
+    const id = b.dataset.id, sel = `.card[data-id="${id}"]`;
+    if (b.dataset.act === "del") { ui.confirmingId = id; ui.focus = sel + " .btn-danger"; }
+    else if (b.dataset.act === "no") { ui.confirmingId = null; ui.focus = sel + " .del"; }
+    else { kanban.remove(id); ui.confirmingId = null; }
+    render();
+  });
+  board.addEventListener("change", ev => {
+    if (!ev.target.classList.contains("move")) return;
+    const id = ev.target.dataset.id;
+    kanban.move(id, ev.target.value);
+    ui.focus = `.card[data-id="${id}"] .move`;
+    render();
+  });
+
+  /* Drag and drop (native HTML5). Move To on each card is the keyboard and touch alternative. */
+  const clearTargets = () => board.querySelectorAll(".is-target").forEach(c => c.classList.remove("is-target"));
+  board.addEventListener("dragstart", ev => {
+    const card = ev.target.closest(".card");
+    if (!card) return;
+    ev.dataTransfer.setData("text/plain", card.dataset.id);
+    ev.dataTransfer.effectAllowed = "move";
+    board.classList.add("is-dragging");
+  });
+  board.addEventListener("dragover", ev => {
+    const col = ev.target.closest(".column");
+    if (!col) return;
+    ev.preventDefault();
+    col.classList.add("is-target");
+  });
+  board.addEventListener("dragleave", ev => {
+    const col = ev.target.closest(".column");
+    if (col && !col.contains(ev.relatedTarget)) col.classList.remove("is-target");
+  });
+  board.addEventListener("dragend", () => { clearTargets(); board.classList.remove("is-dragging"); });
+  board.addEventListener("drop", ev => {
+    const col = ev.target.closest(".column");
+    if (!col) return;
+    ev.preventDefault();
+    clearTargets();
+    board.classList.remove("is-dragging");
+    if (kanban.move(ev.dataTransfer.getData("text/plain"), col.dataset.status)) render();
+  });
+
+  const dialog = $("taskDialog");
+  $("addBtn").addEventListener("click", openDialog);
+  $("cancelBtn").addEventListener("click", () => dialog.close());
+  $("taskForm").addEventListener("submit", onSubmit);
+  dialog.addEventListener("pointerdown", ev => { if (ev.target === dialog) dialog.close(); });
+
+  render();
+}
+init();
+</script>
+</body>
+</html>
